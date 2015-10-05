@@ -41,12 +41,13 @@ int main(int argc, char** argv)
 	/*
 	* LOOP
 	*/
-	int i = 0;
-	while (i<100) {
+	int i = 500;
+	while (i<=1000) {
 
 		// Send directly velocity to motors (% of maximum voltage)
-		pw[0].setvel(i);
-		if (WMOT > 1)	pw[1].setvel(-i);
+		cout << "Velocity :" << (double)i / 10.0 << "%" << endl;
+		pw[0].setvel((double)i/10.0);
+		if (WMOT > 1)	pw[1].setvel(-(double)i/10.0);
 
 		/*
 		// Position control with encoder feedback.
@@ -70,6 +71,7 @@ int main(int argc, char** argv)
 		Sleep(100);
 		i++;
 	}
+	Sleep(500);
 	/// CLOSING
 	if (WMOT) {
 		pw[0].closeMot();
