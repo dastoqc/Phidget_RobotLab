@@ -15,14 +15,30 @@ using namespace std;
 CPhidgetWrapper pw[2];
 
 #define WMOT 2	//0,1,2
+#define REC 1
 
 /**
-* @function main simple
+* @function main
 */
 int main(int argc, char** argv)
 {
 	double target1 = 0.0, target2 = 0.0;
 	int leftM = 0;
+
+	// Create a CSV file with current date/time.
+	time_t t = time(0);   // get time now
+	struct tm * now = localtime(&t);
+	char buffer[80];
+	ofstream csvfile;
+	if (REC) {
+		strftime(buffer, 80, "%Y-%m-%d-%H%M.csv", now);
+		csvfile.open(buffer);
+		if (!csvfile.is_open())
+		{
+			cout << "Error opening csv file." << endl;
+			return -1;
+		}
+	}
 
 	if (!pw[0].Init(0)) // init 0 for dc motor, 1 for stepper
 		return -1; // if init return 0 it fails. we quit.
@@ -68,6 +84,11 @@ int main(int argc, char** argv)
 		__int64 stepcommand = pw[0].rad2steps(target1);
 		if (abs(stepcommand)>10000)	stepcommand = sgn(stepcommand) * 10000;
 		pw[0].GoToStepper(0, stepcommand);*/
+
+		now = localtime(&t);
+		strftime(buffer, 80, "%M%S", now);
+		csvfile << buffer << ";" << target1 << ";" << target2 << ";" << endl;
+
 		Sleep(100);
 		i++;
 	}

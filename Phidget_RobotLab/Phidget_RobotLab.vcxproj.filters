@@ -38,10 +38,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Phidget_RobotLab.cpp">
+    <ClCompile Include="PhidgetClass.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="PhidgetClass.cpp">
+    <ClCompile Include="Phidget_RobotLab - csv.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
