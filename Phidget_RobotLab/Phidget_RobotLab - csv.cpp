@@ -99,5 +99,7 @@ int main(int argc, char** argv)
 		if (WMOT>1)	pw[1].closeMot();
 	}
 
+	if (REC)	csvfile.close();
+
 	return 0;
 }
