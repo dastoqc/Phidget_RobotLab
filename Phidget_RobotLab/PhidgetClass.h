@@ -29,8 +29,10 @@ private:
 	int display_properties(CPhidgetHandle phid);
 	// PID for current or position (encoder) control loop
 	double PID(double error, double errorlast);
+	int lowpass(double raw[10], double(&filtered)[10], double dt, double RC);
+	double remap(double value, double istart, double istop, double ostart, double ostop);
 	int type_ref;// motor type, 0:stepper, 1:dc
-	double gearRatio, errorlast, deadBand, integral, derivative, target;
+	double gearRatio, errorlast, deadBand, integral, derivative;
 	// default gains.
 	double K[3]; double MaxVel; double MinVel;
 
@@ -50,7 +52,7 @@ public:
 	void setvel(double pwr);
 	double SinStepper(int num, double t, int &stepcommand);
 	int GoToStepper(int num, int steps);
-	
+
 	int Init(int type);
 	int InitMotorCtl(int num);
 	int closeMot();
@@ -61,7 +63,7 @@ public:
 	int rad2steps(double rad);
 	double steps2rad(__int64 steps);
 	bool started_pos, started_cur;
-	double curr_pos, curr_cur, curr_vel;
+	double curr_pos, cur_raw[10], cur_fil[10], vel_raw[10], vel_fil[10], curr_accel, target;
 	int devid;
 };
 

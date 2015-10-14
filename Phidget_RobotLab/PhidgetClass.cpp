@@ -41,7 +41,11 @@ CPhidgetWrapper::CPhidgetWrapper() {
 	// ratio of the gear box of the dc motor (to get the right rotation from the encoder)
 	gearRatio = 24;
 	// current values reed from the board.
-	curr_pos = 0;curr_cur = 0;curr_vel = 0;
+	curr_pos = 0;
+	for (unsigned int i = 1; i < 10; i++) {
+		cur_raw[i] = 0;
+		cur_fil[i] = 0;
+	}
 	// PID control values
 	K[0] = 50; K[1] = 1; K[2] = 10;
 	errorlast = 0.0; deadBand = 0.00001; integral = 0; derivative = 0;
@@ -101,7 +105,10 @@ int CPhidgetWrapper::CurrentUpdateHandler(CPhidgetMotorControlHandle IFK, int in
 		setvel(0);
 	}
 
-	curr_cur = current;
+	for (unsigned int i = 1; i < 10; i++)
+		cur_raw[i] = cur_raw[i + 1];
+	cur_raw[9] = current;
+	lowpass(cur_raw, cur_fil, 8.0*1000.0, .01);
 
 	// If feedback is negative, loop back around to 360
 	//if (feedback < 0)
@@ -111,12 +118,11 @@ int CPhidgetWrapper::CurrentUpdateHandler(CPhidgetMotorControlHandle IFK, int in
 	if (started_cur)
 	{
 		// Calculate and set the new output from the control loop
-		double output = PID(target - curr_cur, errorlast);
+		double output = PID(target - cur_fil[9], errorlast);
 		CPhidgetMotorControl_setVelocity(motorctl, 0, output);
-		errorlast = target - curr_cur;
+		errorlast = target - cur_fil[9];
 	}
-		
-		
+
 	return 0;
 }
 // This event handler fires every 8ms, regardless of whether the position has changed. 
@@ -129,7 +135,13 @@ int CPhidgetWrapper::EncoderUpdateHandler(CPhidgetMotorControlHandle phid, int i
     // and not the number of rotations
 	double feedback = (double)positionChange*2*PI/512.0 / gearRatio;//fmod((double)(positionChange / gearRatio), 2*PI);
 	curr_pos+=feedback;
-	curr_vel=feedback/8.0*1000.0;
+
+	for (unsigned int i = 1; i < 10; i++)
+		vel_raw[i] = vel_raw[i + 1];
+	vel_raw[9] = feedback*1000.0 / 8.0;
+	lowpass(vel_raw, vel_fil, .008, 8);
+
+	curr_accel = (vel_fil[9] - vel_fil[8]) * 1000.0 / 8.0;
 	//cout << "Velocities: " << curr_vel*gearRatio << endl;
  
     // If feedback is negative, loop back around to 360
@@ -147,17 +159,25 @@ int CPhidgetWrapper::EncoderUpdateHandler(CPhidgetMotorControlHandle phid, int i
 	return 0;
 }
 
-void CPhidgetWrapper::setvel(double pwr)
+// Take input in % and remap to the output without the deadband.
+void CPhidgetWrapper::setvel(double pwr) 
 {
 	if (abs(pwr) > MaxVel) {
 		cout << "Max output reached!!" << endl;
 		pwr = sgn(pwr) * 100.0;
 	}
-	if (abs(pwr) < MinVel) {
+	/*if (abs(pwr) < MinVel) {
 		cout << "Min output reached!!" << endl;
 		pwr = 0.0;
-	}
-	CPhidgetMotorControl_setVelocity(motorctl, 0, pwr);
+	}*/
+	double sentvel = 0.0;
+
+	if (pwr > 0)
+		sentvel = remap(pwr, 0, 100, MinVel, MaxVel);
+	else
+		sentvel = remap(pwr, -100, 0, -MaxVel, -MinVel);
+
+	CPhidgetMotorControl_setVelocity(motorctl, 0, sentvel);
 }
 
 //Display the properties of the attached phidget to the screen.  We will be displaying the name, serial number and version of the attached device.
@@ -454,6 +474,21 @@ double CPhidgetWrapper::PID(double error, double errorlast)
     //feedbacklast = feedback;
 	//cout << "Error: " << error << ", vel: " << output << " (" << integral << ", " << derivative << ")" << endl;
 	return output;
+}
+
+int CPhidgetWrapper::lowpass(double raw[10], double(&filtered)[10], double dt, double freq_coup)
+{
+	double RC = 1.0 / (2.0 * PI*freq_coup);
+	double alpha = dt / (RC + dt);
+	//cout << "Filter alpha: " << alpha << endl;
+	filtered[0] = raw[0];
+	for (unsigned int i = 1; i < 10; i++)
+		filtered[i] = filtered[i - 1] + (alpha*(raw[i] - filtered[i - 1]));
+	return 1;
+}
+
+double CPhidgetWrapper::remap(double value, double istart, double istop, double ostart, double ostop) {
+	return ostart + (ostop - ostart) * ((value - istart) / (istop - istart));
 }
 
 int CPhidgetWrapper::closeMot()

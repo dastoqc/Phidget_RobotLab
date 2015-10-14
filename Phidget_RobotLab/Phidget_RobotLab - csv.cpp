@@ -2,9 +2,6 @@
 #include <fstream>
 #include <time.h>
 #include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
 
 #include "PhidgetClass.h"
 
@@ -14,7 +11,7 @@ using namespace std;
 
 CPhidgetWrapper pw[2];
 
-#define WMOT 2	//0,1,2
+#define WMOT 1	//0,1,2
 #define REC 1
 
 /**
@@ -27,11 +24,11 @@ int main(int argc, char** argv)
 
 	// Create a CSV file with current date/time.
 	time_t t = time(0);   // get time now
-	struct tm * now = localtime(&t);
+	struct tm * now_t = localtime(&t);
 	char buffer[80];
 	ofstream csvfile;
 	if (REC) {
-		strftime(buffer, 80, "%Y-%m-%d-%H%M.csv", now);
+		strftime(buffer, 80, "%Y-%m-%d-%H%M.csv", now_t);
 		csvfile.open(buffer);
 		if (!csvfile.is_open())
 		{
@@ -57,13 +54,20 @@ int main(int argc, char** argv)
 	/*
 	* LOOP
 	*/
-	int i = 500;
-	while (i<=1000) {
-
+	SYSTEMTIME time; GetSystemTime(&time);
+	double start = (double)time.wMinute * 60.0 + time.wSecond + (double)time.wMilliseconds / 1000.0; //for timestamps
+	double now = (double)time.wMinute * 60.0 + time.wSecond + (double)time.wMilliseconds / 1000.0; //for timestamps
+	double target = 0.0;
+	while ((now - start) <= 40.0) { //loop for 40s
+		GetSystemTime(&time);
+		now = (double)time.wMinute * 60.0 + time.wSecond + (double)time.wMilliseconds / 1000.0;
 		// Send directly velocity to motors (% of maximum voltage)
-		cout << "Velocity :" << (double)i / 10.0 << "%" << endl;
-		pw[0].setvel((double)i/10.0);
-		if (WMOT > 1)	pw[1].setvel(-(double)i/10.0);
+		if (WMOT > 0) {
+			target = 100.0*sin((now - start) * 0.1);// play a sinus
+			cout << "Velocity :" << target << "% (" << (now - start)  << "s)" << endl;
+			pw[0].setvel(target);
+			if (WMOT > 1)	pw[1].setvel(target);
+		}
 
 		/*
 		// Position control with encoder feedback.
@@ -85,14 +89,13 @@ int main(int argc, char** argv)
 		if (abs(stepcommand)>10000)	stepcommand = sgn(stepcommand) * 10000;
 		pw[0].GoToStepper(0, stepcommand);*/
 
-		now = localtime(&t);
-		strftime(buffer, 80, "%M%S", now);
-		csvfile << buffer << ";" << target1 << ";" << target2 << ";" << endl;
+		//GetSystemTime(&time);
+		//WORD now = ((time.wMinute * 60 + time.wSecond) * 1000) + time.wMilliseconds;
+		csvfile << now-start << ";" << target << ";" << pw[0].curr_pos << "; " << pw[1].curr_pos << "; " << pw[0].vel_raw[9] << "; " << pw[1].vel_raw[9] << "; " << pw[0].vel_fil[9] << "; " << pw[1].vel_fil[9] << "; " << pw[0].curr_accel << "; " << pw[1].curr_accel << "; " << pw[0].cur_fil[9] << "; " << pw[1].cur_fil[9] << "; " << endl;
 
-		Sleep(100);
-		i++;
+		Sleep(10);
 	}
-	Sleep(500);
+
 	/// CLOSING
 	if (WMOT) {
 		pw[0].closeMot();
