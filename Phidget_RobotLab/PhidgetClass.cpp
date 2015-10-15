@@ -17,8 +17,6 @@
 #include "PhidgetClass.h"
 #include "eventhandlers.h"
 
-#include "stdafx.h"
-
 /*#ifndef WIN32
 #ifndef __stdcall
 #define __stdcall __attribute__((stdcall))
@@ -37,7 +35,7 @@ CPhidgetWrapper::CPhidgetWrapper() {
 	// handle for the dcmotor communication
 	motorctl = 0;
 	// boolean to start the pid control (one at the time!)
-	started_pos = false; started_cur = false;
+	started_pos = false; started_vel = false; started_cur = false;
 	// ratio of the gear box of the dc motor (to get the right rotation from the encoder)
 	gearRatio = 24;
 	// current values reed from the board.
@@ -45,10 +43,14 @@ CPhidgetWrapper::CPhidgetWrapper() {
 	for (unsigned int i = 1; i < 10; i++) {
 		cur_raw[i] = 0;
 		cur_fil[i] = 0;
+		vel_fil[i] = 0;
+	}
+	for (unsigned int i = 1; i < 50; i++) {
+		vel_raw[i] = 0;
 	}
 	// PID control values
 	K[0] = 50; K[1] = 1; K[2] = 10;
-	errorlast = 0.0; deadBand = 0.00001; integral = 0; derivative = 0;
+	errorlast = 0.0; deadBand = 0.001; integral = 0; derivative = 0;
 	// command in position or current for closed-loop
 	target = 0;
 }
@@ -102,7 +104,7 @@ int CPhidgetWrapper::CurrentUpdateHandler(CPhidgetMotorControlHandle IFK, int in
 
 	if (current > 1.5) {
 		cout << "Dangerous current!!!" << endl;
-		setvel(0);
+		setvel(0,0);
 	}
 
 	for (unsigned int i = 1; i < 10; i++)
@@ -136,10 +138,11 @@ int CPhidgetWrapper::EncoderUpdateHandler(CPhidgetMotorControlHandle phid, int i
 	double feedback = (double)positionChange*2*PI/512.0 / gearRatio;//fmod((double)(positionChange / gearRatio), 2*PI);
 	curr_pos+=feedback;
 
-	for (unsigned int i = 1; i < 10; i++)
+	for (unsigned int i = 1; i < 50; i++)
 		vel_raw[i] = vel_raw[i + 1];
-	vel_raw[9] = feedback*1000.0 / 8.0;
-	lowpass(vel_raw, vel_fil, .008, 8);
+	vel_raw[49] = feedback*1000.0 / 8.0;
+	//lowpass(vel_raw, vel_fil, .008, 10);
+	gausfil(vel_raw, vel_fil);
 
 	curr_accel = (vel_fil[9] - vel_fil[8]) * 1000.0 / 8.0;
 	//cout << "Velocities: " << curr_vel*gearRatio << endl;
@@ -153,16 +156,34 @@ int CPhidgetWrapper::EncoderUpdateHandler(CPhidgetMotorControlHandle phid, int i
     {
         // Calculate and set the new output from the control loop
         double output = PID(target - curr_pos, errorlast);
-		CPhidgetMotorControl_setVelocity(motorctl, 0, output);
+		setvel(output,1);
 		errorlast = target - curr_pos;
     }
+	else if (started_vel)
+	{
+		// Calculate and set the new output from the control loop
+		double output = PID(target - vel_fil[9], errorlast);
+		setvel(output,1);
+		errorlast = target - vel_fil[9];
+	}
 	return 0;
 }
 
 // Take input in % and remap to the output without the deadband.
-void CPhidgetWrapper::setvel(double pwr) 
+double CPhidgetWrapper::deadbandremap(double vel)
 {
-	if (abs(pwr) > MaxVel) {
+	double sentvel = 0.0;
+	if (vel > 0)
+		sentvel = remap(vel, 0, 100, MinVel, MaxVel);
+	else
+		sentvel = remap(vel, -100, 0, -MaxVel, -MinVel);
+
+	return sentvel;
+}
+
+void CPhidgetWrapper::setvel(double pwr, bool dbmanage) 
+{
+	if (abs(pwr) >= MaxVel) {
 		cout << "Max output reached!!" << endl;
 		pwr = sgn(pwr) * 100.0;
 	}
@@ -170,14 +191,10 @@ void CPhidgetWrapper::setvel(double pwr)
 		cout << "Min output reached!!" << endl;
 		pwr = 0.0;
 	}*/
-	double sentvel = 0.0;
-
-	if (pwr > 0)
-		sentvel = remap(pwr, 0, 100, MinVel, MaxVel);
+	if(dbmanage)
+		CPhidgetMotorControl_setVelocity(motorctl, 0, deadbandremap(pwr));
 	else
-		sentvel = remap(pwr, -100, 0, -MaxVel, -MinVel);
-
-	CPhidgetMotorControl_setVelocity(motorctl, 0, sentvel);
+		CPhidgetMotorControl_setVelocity(motorctl, 0, pwr);
 }
 
 //Display the properties of the attached phidget to the screen.  We will be displaying the name, serial number and version of the attached device.
@@ -487,6 +504,18 @@ int CPhidgetWrapper::lowpass(double raw[10], double(&filtered)[10], double dt, d
 	return 1;
 }
 
+int CPhidgetWrapper::gausfil(double raw[50], double(&filtered)[10])
+{
+	//double coef[10] = { 0.0252,0.0456,0.0776,0.1240,0.1861,0.2624,0.3476,0.4326,0.5058,0.5555 };
+	double coef[50] = {0.0018,0.0023,0.0029,0.0037,0.0046,0.0057,0.0069,0.0084,0.0100,0.0118,0.0138,0.0159,0.0182,0.0207,0.0232,0.0257,0.0282,0.0307,0.0330,0.0352,0.0370,0.0386,0.0398,0.0407,0.0411,0.0411,0.0407,0.0398,0.0386,0.0370,0.0352,0.0330,0.0307,0.0282,0.0257,0.0232,0.0207,0.0182,0.0159,0.0138,0.0118,0.0100,0.0084,0.0069,0.0057,0.0046,0.0037,0.0029,0.0023,0.0018};
+	for (unsigned int i = 1; i < 10; i++)
+		filtered[i] = filtered[i + 1];
+	filtered[9] = 0.0;
+	for (unsigned int i = 0; i < 50; i++)
+		filtered[9] += coef[i]*raw[i];
+	return 1;
+}
+
 double CPhidgetWrapper::remap(double value, double istart, double istop, double ostart, double ostop) {
 	return ostart + (ostop - ostart) * ((value - istart) / (istop - istart));
 }
@@ -494,7 +523,7 @@ double CPhidgetWrapper::remap(double value, double istart, double istop, double 
 int CPhidgetWrapper::closeMot()
 {
 	int rc;
-	started_pos = false; started_cur = 0;
+	started_vel = false; started_pos = false; started_cur = false;
 	Sleep(100);
 	if(type_ref)
 		rc = CloseStepper(0);

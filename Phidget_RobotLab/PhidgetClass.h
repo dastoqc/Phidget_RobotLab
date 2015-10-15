@@ -30,7 +30,9 @@ private:
 	// PID for current or position (encoder) control loop
 	double PID(double error, double errorlast);
 	int lowpass(double raw[10], double(&filtered)[10], double dt, double RC);
+	int gausfil(double raw[50], double(&filtered)[10]);
 	double remap(double value, double istart, double istop, double ostart, double ostop);
+	double deadbandremap(double vel);
 	int type_ref;// motor type, 0:stepper, 1:dc
 	double gearRatio, errorlast, deadBand, integral, derivative;
 	// default gains.
@@ -49,7 +51,7 @@ public:
 	int InitStepper(int num);
 	int stepper_simple(int num, __int64 targetsteps);
 	int CloseStepper(int num);
-	void setvel(double pwr);
+	void setvel(double pwr, bool dbmanage);
 	double SinStepper(int num, double t, int &stepcommand);
 	int GoToStepper(int num, int steps);
 
@@ -62,8 +64,8 @@ public:
 	double distance360(double input, double feedback);
 	int rad2steps(double rad);
 	double steps2rad(__int64 steps);
-	bool started_pos, started_cur;
-	double curr_pos, cur_raw[10], cur_fil[10], vel_raw[10], vel_fil[10], curr_accel, target;
+	bool started_pos, started_vel, started_cur;
+	double curr_pos, cur_raw[10], cur_fil[10], vel_raw[50], vel_fil[10], curr_accel, target;
 	int devid;
 };
 
