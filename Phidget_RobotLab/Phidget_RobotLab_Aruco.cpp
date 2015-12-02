@@ -13,7 +13,7 @@ using namespace std;
 CPhidgetWrapper pw[2];
 arucofct AF;
 
-#define WMOT 2	//0,1,2
+#define WMOT 0	//0,1,2
 #define REC 1
 
 
@@ -65,20 +65,24 @@ int main(int argc, char** argv)
 	do {
 		GetSystemTime(&time);
 		now = (double)time.wMinute * 60.0 + time.wSecond + (double)time.wMilliseconds / 1000.0;
-		target1 = 42*sin((now - start) * 0.4);// play a sinus
-		cout << "Velocity :" << target1 << "% (" << (now - start)  << "s)" << endl;
+		target1 = 42 * sin((now - start) * 0.4);// play a sinus
+		cout << "Velocity :" << target1 << "% (" << (now - start) << "s)" << endl;
 
 		// Send directly velocity to motors (% of maximum voltage)
 		/*if (WMOT > 0) {
 			pw[0].setvel(target1,1);	//set to 1 to use deadband remaping.
 			if (WMOT > 1)	pw[1].setvel(target1,1);
 		}*/
-		
+
 		// Velocity control with encoder feedback.
-		pw[0].target=target1;	//set the target position
-		pw[0].started_vel=true;	//start the PID
-		if(WMOT>1)	pw[1].target=target1;
-		if(WMOT>1)	pw[1].started_vel=true;
+		if (WMOT > 0) {
+			pw[0].target = target1;	//set the target position
+			pw[0].started_vel = true;	//start the PID
+		}
+		if (WMOT > 1) {
+			pw[1].target = target1;
+			pw[1].started_vel = true;
+		}
 
 		/*
 		// Position control with encoder feedback.

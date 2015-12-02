@@ -77,7 +77,9 @@ int arucofct::getmarkers(int REC, double dt) {
 
 	for (unsigned int i = 0; i < TheMarkers.size(); i++) {
 		cout << "ID: " << TheMarkers[i].id << endl;
-		cout << "Rotation: " << TheMarkers[i].Rvec << endl << "Translation: " << TheMarkers[i].Tvec << endl;
+		Mat rotation;
+		Rodrigues(TheMarkers[i].Rvec, rotation);
+		cout << "Rotation: " << rotation << endl << "Translation: " << TheMarkers[i].Tvec << endl;
 		if (TheMarkers[i].id == 599)
 			measurement.at<float>(0) = TheMarkers[i].Tvec.at<float>(0);
 	}
