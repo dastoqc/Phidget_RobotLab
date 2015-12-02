@@ -37,7 +37,7 @@ CPhidgetWrapper::CPhidgetWrapper() {
 	// boolean to start the pid control (one at the time!)
 	started_pos = false; started_vel = false; started_cur = false;
 	// ratio of the gear box of the dc motor (to get the right rotation from the encoder)
-	gearRatio = 24;
+	gearRatio = 24; MaxVel = 50; MinVel = 0; MotCmd_max = 100; MotCmd_min = 0;
 	// current values reed from the board.
 	curr_pos = 0;
 	for (unsigned int i = 1; i < 10; i++) {
@@ -174,16 +174,18 @@ double CPhidgetWrapper::deadbandremap(double vel)
 {
 	double sentvel = 0.0;
 	if (vel > 0)
-		sentvel = remap(vel, 0, 100, MinVel, MaxVel);
+		sentvel = remap(vel, MinVel, MaxVel, MotCmd_min, MotCmd_max);
+	else if (vel == 0)
+		sentvel = 0;
 	else
-		sentvel = remap(vel, -100, 0, -MaxVel, -MinVel);
+		sentvel = remap(vel, -MaxVel, MinVel, -MotCmd_max, -MotCmd_min);
 
 	return sentvel;
 }
 
 void CPhidgetWrapper::setvel(double pwr, bool dbmanage) 
 {
-	if (abs(pwr) >= MaxVel) {
+	if (abs(pwr) >= MotCmd_max) {
 		cout << "Max output reached!!" << endl;
 		pwr = sgn(pwr) * 100.0;
 	}
@@ -434,14 +436,21 @@ int CPhidgetWrapper::GoToStepper(int num, int steps)
 	return 0;
 }
 
-void CPhidgetWrapper::setGains(double P, double I, double D, double max, double min)
+void CPhidgetWrapper::setGains(double P, double I, double D, double db)
 {
 	K[0] = P;
 	K[1] = I;
 	K[2] = D;
-	MaxVel = max; MinVel = min;
+	deadBand = db;
 	return;
 }
+
+void CPhidgetWrapper::setlimits(double maxO, double minO, double maxI, double minI)
+{
+	MotCmd_max = maxO; MotCmd_min = minO;
+	MaxVel = maxI; MinVel = minI;
+}
+
 // This function does the control system calculations and sets output to the duty cycle that the motor needs to run at.
 double CPhidgetWrapper::PID(double error, double errorlast)
 {

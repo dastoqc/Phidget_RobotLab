@@ -38,12 +38,14 @@ int main(int argc, char** argv)
 
 	if (!pw[0].Init(0)) // init 0 for dc motor, 1 for stepper
 		return -1; // if init return 0 it fails. we quit.
-	pw[0].setGains(1.7, 0.0, 0.03, 100, 8.35); // P, I, D gains (for wrapper current, velocity or position control) then MaxVelocity and MinVelocity (or motor deadband)
+	pw[0].setGains(1.5, 0.9, 0.08, 0.01); // P, I, D gains (for wrapper current, velocity or position control) and PID deadband
+	pw[0].setlimits(100, 8.35, 42.0, 0.0); //MaxVelocity, MinVelocity (for motor command without deadband) and input velocity limits in r/s
 
 	if (WMOT > 1) {	//again for the second motor.
 		if (!pw[1].Init(0))
 			return -1;
-		pw[1].setGains(1.7, 0.0, 0.03, 100, 7);
+		pw[1].setGains(1.7, 0.0, 0.03, 0.001);
+		pw[1].setlimits(100, 7, 42.0, 0.0);
 	}
 
 
@@ -53,10 +55,10 @@ int main(int argc, char** argv)
 	/*
 	* LOOP
 	*/
-	while ((now - start) <= 40.0) { //loop for 40s
+	while ((now - start) <= 10.0) { //loop for 5s
 		GetSystemTime(&time);
 		now = (double)time.wMinute * 60.0 + time.wSecond + (double)time.wMilliseconds / 1000.0;
-		target1 = 100.0*sin((now - start) * 0.5);// play a sinus
+		target1 = 42*sin((now - start) * 0.4);// play a sinus
 		cout << "Velocity :" << target1 << "% (" << (now - start)  << "s)" << endl;
 
 		// Send directly velocity to motors (% of maximum voltage)

@@ -36,7 +36,7 @@ private:
 	int type_ref;// motor type, 0:stepper, 1:dc
 	double gearRatio, errorlast, deadBand, integral, derivative;
 	// default gains.
-	double K[3]; double MaxVel; double MinVel;
+	double K[3]; double MotCmd_max, MotCmd_min, MaxVel, MinVel;
 
 public:
 	CPhidgetWrapper();
@@ -60,7 +60,8 @@ public:
 	int closeMot();
 	int CloseMotorCtl(int num);
 
-	void setGains(double P, double I, double D, double max, double min);
+	void setGains(double P, double I, double D, double db);
+	void setlimits(double maxO, double minO, double maxI, double minI);
 	double distance360(double input, double feedback);
 	int rad2steps(double rad);
 	double steps2rad(__int64 steps);
