@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="aruco125">
+      <UniqueIdentifier>{bca59726-2e30-4371-9d8a-f905ab783659}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -33,6 +36,45 @@
     <ClInclude Include="eventhandlers.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="aruco125\ar_omp.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\aruco.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\arucofidmarkers.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\board.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\boarddetector.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\cameraparameters.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\chromaticmask.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\cvdrawingutils.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\exports.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\highlyreliablemarkers.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\marker.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\markerdetector.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
+    <ClInclude Include="aruco125\subpixelcorner.h">
+      <Filter>aruco125</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -41,7 +83,46 @@
     <ClCompile Include="PhidgetClass.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Phidget_RobotLab - csv.cpp">
+    <ClCompile Include="aruco125\ar_omp.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\arucofidmarkers.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\board.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\boarddetector.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\cameraparameters.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\chromaticmask.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\cvdrawingutils.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\highlyreliablemarkers.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\marker.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\markerdetector.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="aruco125\subpixelcorner.cpp">
+      <Filter>aruco125</Filter>
+    </ClCompile>
+    <ClCompile Include="arucofct.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClCompile>
+    <ClCompile Include="arucofct.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Phidget_RobotLab_Aruco.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
