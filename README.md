@@ -1,7 +1,7 @@
 # Phidget_RobotLab
 Phidget C++ wrapper.
 
-Programme démo pour Phidget motor DC plus détection de tags Aruco.
+Programme démo pour Phidget motor DC plus détection de tags Aruco (http://www.uco.es/investiga/grupos/ava/node/26).
 
 Avant de rouler, s'assurer de décompresser le dossier de dll (opencvdll_debugx64.zip ou opencvdll_releasex64) dans le répertoire de l'exécutable.
 
